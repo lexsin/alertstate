@@ -10,13 +10,13 @@ import (
 func StartTest() {
 	ticker := time.NewTicker(1 * time.Second)
 	count := 0
-	ss := make([]entryRecord, 0)
+	ss := make([]EntryRecord, 0)
 	for {
 		select {
 		case <-ticker.C:
 			count = 0
 			send(ss)
-			ss = make([]entryRecord, 0)
+			ss = make([]EntryRecord, 0)
 		default:
 			if count == 50000 {
 				//fmt.Println("count=10000")
@@ -29,20 +29,20 @@ func StartTest() {
 	}
 }
 
-func send(ss []entryRecord) {
+func send(ss []EntryRecord) {
 	fmt.Println("send len = ", len(ss))
 	for _, record := range ss {
 		InputCh <- record
 	}
 }
 
-func genSample() entryRecord {
+func genSample() EntryRecord {
 	rand.Seed(time.Now().UnixNano())
 	sniffer := rand.Intn(9) + 1
 	site := rand.Intn(9) + 1
 	class := rand.Intn(8) + 1
 
-	return entryRecord{
+	return EntryRecord{
 		Timestamp:   int64(time.Now().Unix()),
 		Class:       classIntStr[classType(class)],
 		Sniffer:     int64(sniffer),

@@ -27,7 +27,7 @@ func (this *GlobalCache) Init() {
 	this.StateMap.Init()
 }
 
-func (this *GlobalCache) Insert(data entryRecord) {
+func (this *GlobalCache) Insert(data EntryRecord) {
 	this.lock.Lock()
 	defer this.lock.Unlock()
 	//to global_cache

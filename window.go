@@ -23,7 +23,7 @@ func (this *StateMap) String() string {
 	return str
 }
 
-func (this *StateMap) accmAdd(data entryRecord) {
+func (this *StateMap) accmAdd(data EntryRecord) {
 	MapInt32StateUnit(this.typeNum).Add(int32(data.class))
 	MapInt32StateUnit(this.snifferNum).Add(int32(data.Sniffer))
 	MapInt32Int32StateUnit(this.snifTypeNum).Add(int32(data.Sniffer), int32(data.class))
@@ -68,7 +68,7 @@ func (this *window) init(timestamp int64) *window {
 	return this
 }
 
-func (this *window) insert(data entryRecord) {
+func (this *window) insert(data EntryRecord) {
 	this.mp.accmAdd(data)
 }
 

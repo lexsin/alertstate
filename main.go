@@ -6,7 +6,7 @@ import (
 	//"time"
 )
 
-type entryRecord struct {
+type EntryRecord struct {
 	Timestamp   int64
 	Class       string
 	class       classType
@@ -16,7 +16,7 @@ type entryRecord struct {
 	Sitename    string
 }
 
-func (this *entryRecord) Transform() error {
+func (this *EntryRecord) Transform() error {
 	class, ok := classStrInt[this.Class]
 	if !ok {
 		fmt.Println("alert type error:", this.Class)
@@ -27,13 +27,13 @@ func (this *entryRecord) Transform() error {
 }
 
 var GLocalCach LocalCache
-var InputCh = make(chan entryRecord, InputCacheLenDef)
+var InputCh = make(chan EntryRecord, InputCacheLenDef)
 
 type LocalCache struct {
 	lock        *sync.Mutex
 	WinWidth    int32 //秒
 	WinNum      int32
-	InputCh     chan entryRecord
+	InputCh     chan EntryRecord
 	MaxWinId    int64
 	Windows     map[int64]*window
 	WillBeDelId int64
@@ -92,7 +92,7 @@ func (this *LocalCache) MvToGlobal(id int64) error {
 	return nil
 }
 
-func (this *LocalCache) insert(winid int64, data entryRecord) {
+func (this *LocalCache) insert(winid int64, data EntryRecord) {
 	//record name
 	gIdNameMap.Insert(
 		idNameT{int32(data.Sniffer), data.Sniffername},
@@ -101,7 +101,7 @@ func (this *LocalCache) insert(winid int64, data entryRecord) {
 	this.Windows[winid].insert(data)
 }
 
-func (this *LocalCache) Insert2(data entryRecord) (err error) {
+func (this *LocalCache) Insert2(data EntryRecord) (err error) {
 	winid := data.Timestamp / int64(this.WinWidth)
 
 	if this.MaxWinId == 0 {
