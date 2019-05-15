@@ -18,7 +18,7 @@ func StartTest() {
 			send(ss)
 			ss = make([]EntryRecord, 0)
 		default:
-			if count == 50000 {
+			if count == 1 {
 				//fmt.Println("count=10000")
 				continue
 			}
@@ -40,11 +40,11 @@ func genSample() EntryRecord {
 	rand.Seed(time.Now().UnixNano())
 	sniffer := rand.Intn(9) + 1
 	site := rand.Intn(9) + 1
-	class := rand.Intn(8) + 1
+	genre := rand.Intn(8) + 1
 
 	return EntryRecord{
 		Timestamp:   int64(time.Now().Unix()),
-		Class:       classIntStr[classType(class)],
+		Genre:       classIntStr[classType(genre)],
 		Sniffer:     int64(sniffer),
 		Sniffername: strconv.Itoa(sniffer),
 		Site:        int32(site),

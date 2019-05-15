@@ -45,10 +45,10 @@ func (this *GlobalCache) ToSlice() *GlobalResult {
 	result := new(GlobalResult).init()
 	result.Time = this.time
 	result.Total = this.total
-	result.Class = StateTypeUnits(result.Class).FromMap(this.typeNum)
-	//fmt.Println("class=", result.Class)
+	result.Genre = StateTypeUnits(result.Genre).FromMap(this.typeNum)
+	//fmt.Println("genre=", result.Genre)
 	result.Sniffer = StateSnifUnits(result.Sniffer).FromMap(this.snifferNum, this.snifTypeNum)
 	result.Site = StateSiteUnits(result.Site).FromMap(this.siteNum)
-	result.SnifferRealtime = StateSnifUnits(result.Sniffer).FromMap(this.snifferNumRt, this.snifTypeNumRt)
+	result.SnifferRealtime = StateSnifUnits(result.SnifferRealtime).FromMap(this.snifferNumRt, this.snifTypeNumRt)
 	return result
 }

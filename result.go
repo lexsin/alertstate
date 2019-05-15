@@ -7,14 +7,14 @@ import (
 
 type StateSlice struct {
 	Total           StateUnit
-	Class           []StateTypeUnit `json:"type"`
+	Genre           []StateTypeUnit `json:"type"`
 	Sniffer         []StateSnifUnit `json:"sniffer"`
 	SnifferRealtime []StateSnifUnit `json:"snifrealtime"`
 	Site            []StateSiteUnit `json:"site"`
 }
 
 func (this *StateSlice) Init() {
-	this.Class = make([]StateTypeUnit, 0)
+	this.Genre = make([]StateTypeUnit, 0)
 	this.Sniffer = make([]StateSnifUnit, 0)
 	this.SnifferRealtime = make([]StateSnifUnit, 0)
 	this.Site = make([]StateSiteUnit, 0)
@@ -33,7 +33,7 @@ func (this *GlobalResult) init() *GlobalResult {
 func (this *GlobalResult) String() string {
 	str := fmt.Sprintln("time=", this.Time)
 	str += fmt.Sprintln("Total=", this.Total)
-	str += fmt.Sprintln("Class=", this.Class)
+	str += fmt.Sprintln("Genre=", this.Genre)
 	str += fmt.Sprintln("Sniffer=", this.Sniffer)
 	str += fmt.Sprintln("site=", this.Site)
 	return str

@@ -47,7 +47,7 @@ func (this *AlertStateFix) FromArts(para *alertstate.GlobalResult) {
 	this.Time = TimeFormUi(para.Time)
 	this.Interval = alertstate.GLocalCach.WinWidth * 1000 //s-->ms
 	this.Total = para.Total
-	this.Genre = para.Class
+	this.Genre = para.Genre
 	this.SnifferFromArts(para.Sniffer)
 }
 

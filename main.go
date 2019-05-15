@@ -3,13 +3,13 @@ package alertstate
 import (
 	"fmt"
 	"sync"
-	//"time"
+	"time"
 )
 
 type EntryRecord struct {
 	Timestamp   int64
-	Class       string
-	class       classType
+	Genre       string
+	genre       classType
 	Sniffer     int64
 	Sniffername string
 	Site        int32
@@ -17,12 +17,12 @@ type EntryRecord struct {
 }
 
 func (this *EntryRecord) Transform() error {
-	class, ok := classStrInt[this.Class]
+	genre, ok := classStrInt[this.Genre]
 	if !ok {
-		fmt.Println("alert type error:", this.Class)
+		fmt.Println("alert type error:", this.Genre)
 		return ErrClassTypeErr
 	}
-	this.class = class
+	this.genre = genre
 	return nil
 }
 
@@ -86,7 +86,7 @@ func (this *LocalCache) MvToGlobal(id int64) error {
 	gGlobalCache.time = this.Windows[id].time
 	gGlobalCache.merge((this.Windows[id].mp))
 	gGlobalCache.snifTypeNumRt = this.Windows[id].mp.snifTypeNum
-	gGlobalCache.snifferNumRt = this.Windows[id].mp.siteNum
+	gGlobalCache.snifferNumRt = this.Windows[id].mp.snifferNum
 	//free map
 	delete(this.Windows, id)
 	return nil
@@ -158,15 +158,15 @@ func (this *LocalCache) Insert2(data EntryRecord) (err error) {
 }
 
 func (this *LocalCache) Start() {
-	//	go func() {
-	//		for {
-	//			time.Sleep(1 * time.Second)
-	//			//			if this.MaxWinId != 0 {
-	//			//				fmt.Println("cur maxid window:", this.Windows[this.MaxWinId])
-	//			//			}
-	//			//fmt.Println("gGlobalCache=", &gGlobalCache)
-	//		}
-	//	}()
+	go func() {
+		for {
+			time.Sleep(1 * time.Second)
+			//			if this.MaxWinId != 0 {
+			//				fmt.Println("cur maxid window:", this.Windows[this.MaxWinId])
+			//			}
+			fmt.Println("snifTypeNumRt=", gGlobalCache.snifTypeNumRt, "snifferNumRt=", gGlobalCache.snifTypeNumRt)
+		}
+	}()
 	if this.Handler == nil {
 		fmt.Println("start Error:LocalCache handler is nil")
 		return
