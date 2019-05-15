@@ -25,9 +25,9 @@ func (this *StateMap) String() string {
 
 func (this *StateMap) accmAdd(data entryRecord) {
 	MapInt32StateUnit(this.typeNum).Add(int32(data.class))
-	MapInt32StateUnit(this.snifferNum).Add(data.sniffer)
-	MapInt32Int32StateUnit(this.snifTypeNum).Add(data.sniffer, int32(data.class))
-	MapInt32StateUnit(this.siteNum).Add(data.site)
+	MapInt32StateUnit(this.snifferNum).Add(int32(data.Sniffer))
+	MapInt32Int32StateUnit(this.snifTypeNum).Add(int32(data.Sniffer), int32(data.class))
+	MapInt32StateUnit(this.siteNum).Add(data.Site)
 	this.total.Total++
 	this.total.Noread++
 }

@@ -3,16 +3,27 @@ package alertstate
 import (
 	"fmt"
 	"sync"
-	"time"
+	//"time"
 )
 
 type entryRecord struct {
-	timestamp   int64
+	Timestamp   int64
+	Class       string
 	class       classType
-	sniffer     int32
-	sniffername string
-	site        int32
-	sitename    string
+	Sniffer     int64
+	Sniffername string
+	Site        int32
+	Sitename    string
+}
+
+func (this *entryRecord) Transform() error {
+	class, ok := classStrInt[this.Class]
+	if !ok {
+		fmt.Println("alert type error:", this.Class)
+		return ErrClassTypeErr
+	}
+	this.class = class
+	return nil
 }
 
 var GLocalCach LocalCache
@@ -84,14 +95,14 @@ func (this *LocalCache) MvToGlobal(id int64) error {
 func (this *LocalCache) insert(winid int64, data entryRecord) {
 	//record name
 	gIdNameMap.Insert(
-		idNameT{data.sniffer, data.sniffername},
-		idNameT{data.site, data.sitename})
+		idNameT{int32(data.Sniffer), data.Sniffername},
+		idNameT{int32(data.Site), data.Sitename})
 	//insert
 	this.Windows[winid].insert(data)
 }
 
 func (this *LocalCache) Insert2(data entryRecord) (err error) {
-	winid := data.timestamp / int64(this.WinWidth)
+	winid := data.Timestamp / int64(this.WinWidth)
 
 	if this.MaxWinId == 0 {
 		/*
@@ -147,18 +158,25 @@ func (this *LocalCache) Insert2(data entryRecord) (err error) {
 }
 
 func (this *LocalCache) Start() {
-	go func() {
-		for {
-			time.Sleep(1 * time.Second)
-			//			if this.MaxWinId != 0 {
-			//				fmt.Println("cur maxid window:", this.Windows[this.MaxWinId])
-			//			}
-			//fmt.Println("gGlobalCache=", &gGlobalCache)
-		}
-	}()
+	//	go func() {
+	//		for {
+	//			time.Sleep(1 * time.Second)
+	//			//			if this.MaxWinId != 0 {
+	//			//				fmt.Println("cur maxid window:", this.Windows[this.MaxWinId])
+	//			//			}
+	//			//fmt.Println("gGlobalCache=", &gGlobalCache)
+	//		}
+	//	}()
+	if this.Handler == nil {
+		fmt.Println("start Error:LocalCache handler is nil")
+		return
+	}
 	for {
 		select {
 		case data := <-this.InputCh:
+			if err := data.Transform(); err != nil {
+				continue
+			}
 			this.Insert2(data)
 		}
 	}

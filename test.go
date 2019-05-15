@@ -43,11 +43,11 @@ func genSample() entryRecord {
 	class := rand.Intn(8) + 1
 
 	return entryRecord{
-		timestamp:   int64(time.Now().Unix()),
-		class:       classType(class),
-		sniffer:     int32(sniffer),
-		sniffername: strconv.Itoa(sniffer),
-		site:        int32(site),
-		sitename:    strconv.Itoa(site),
+		Timestamp:   int64(time.Now().Unix()),
+		Class:       classIntStr[classType(class)],
+		Sniffer:     int64(sniffer),
+		Sniffername: strconv.Itoa(sniffer),
+		Site:        int32(site),
+		Sitename:    strconv.Itoa(site),
 	}
 }

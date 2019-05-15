@@ -34,8 +34,8 @@ func (this *GlobalCache) Insert(data entryRecord) {
 	this.StateMap.accmAdd(data)
 	//record name
 	gIdNameMap.Insert(
-		idNameT{data.sniffer, data.sniffername},
-		idNameT{data.site, data.sitename})
+		idNameT{int32(data.Sniffer), data.Sniffername},
+		idNameT{int32(data.Site), data.Sitename})
 }
 
 func (this *GlobalCache) ToSlice() *GlobalResult {
