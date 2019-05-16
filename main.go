@@ -67,10 +67,21 @@ func (this *LocalCache) deleteWindow(id int64) error {
 	this.MvToGlobal(id)
 	//to handler(websocket)
 	//TODO
+	this.StateNHandler()
+	return nil
+}
+
+func (this *LocalCache) recycleAllWindows() {
+	for wid, _ := range this.Windows {
+		this.MvToGlobal(wid)
+	}
+	this.StateNHandler()
+}
+
+func (this *LocalCache) StateNHandler() {
 	result := gGlobalCache.ToSlice()
 	this.Handler(result)
 	//fmt.Println("result", result)
-	return nil
 }
 
 func (this *LocalCache) MvToGlobal(id int64) error {
@@ -101,7 +112,7 @@ func (this *LocalCache) insert(winid int64, data EntryRecord) {
 	this.Windows[winid].insert(data)
 }
 
-func (this *LocalCache) Insert2(data EntryRecord) (err error) {
+func (this *LocalCache) Insert(data EntryRecord) (err error) {
 	winid := data.Timestamp / int64(this.WinWidth)
 
 	if this.MaxWinId == 0 {
@@ -158,31 +169,33 @@ func (this *LocalCache) Insert2(data EntryRecord) (err error) {
 }
 
 func (this *LocalCache) Start() {
-	go func() {
-		for {
-			time.Sleep(1 * time.Second)
-			//			if this.MaxWinId != 0 {
-			//				fmt.Println("cur maxid window:", this.Windows[this.MaxWinId])
-			//			}
-			fmt.Println("snifTypeNumRt=", gGlobalCache.snifTypeNumRt, "snifferNumRt=", gGlobalCache.snifTypeNumRt)
-		}
-	}()
 	if this.Handler == nil {
 		fmt.Println("start Error:LocalCache handler is nil")
 		return
 	}
+
+	winTimeout := time.Duration(this.WinWidth) * time.Second
+	timer := time.NewTimer(winTimeout)
 	for {
+		timer.Reset(winTimeout)
 		select {
 		case data := <-this.InputCh:
 			if err := data.Transform(); err != nil {
 				continue
 			}
-			this.Insert2(data)
+			this.Insert(data)
+		case <-timer.C:
+			this.recycleAllWindows()
 		}
 	}
 }
 
-//func main() {
-//	go GLocalCach.Start()
-//	//startTest()
-//}
+func Print() {
+	//	go func() {
+	//		for {
+	//			time.Sleep(1 * time.Second)
+
+	//			fmt.Println("snifTypeNumRt=", gGlobalCache.snifTypeNumRt, "snifferNumRt=", gGlobalCache.snifTypeNumRt)
+	//		}
+	//	}()
+}

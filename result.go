@@ -176,7 +176,7 @@ type StateTypeUnit struct {
 
 func (this StateTypeUnit) String() string {
 	str := fmt.Sprintf("name:%s", this.Name)
-	str += fmt.Sprintln(&this.StateUnit)
+	str += fmt.Sprintf(&this.StateUnit)
 	return str
 }
 

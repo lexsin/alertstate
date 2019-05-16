@@ -10,10 +10,15 @@ import (
 func StartTest() {
 	ticker := time.NewTicker(1 * time.Second)
 	count := 0
+	tickercount := 0
 	ss := make([]EntryRecord, 0)
 	for {
 		select {
 		case <-ticker.C:
+			if tickercount == 2 {
+				return
+			}
+			tickercount++
 			count = 0
 			send(ss)
 			ss = make([]EntryRecord, 0)

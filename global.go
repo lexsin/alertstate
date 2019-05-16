@@ -50,5 +50,122 @@ func (this *GlobalCache) ToSlice() *GlobalResult {
 	result.Sniffer = StateSnifUnits(result.Sniffer).FromMap(this.snifferNum, this.snifTypeNum)
 	result.Site = StateSiteUnits(result.Site).FromMap(this.siteNum)
 	result.SnifferRealtime = StateSnifUnits(result.SnifferRealtime).FromMap(this.snifferNumRt, this.snifTypeNumRt)
+	this.snifferNumRt = nil
+	this.snifTypeNumRt = nil
 	return result
+}
+
+func SubType(genre string, total int32, noread int32) {
+	id := int32(classStrInt[genre])
+	gGlobalCache.lock.Lock()
+	defer gGlobalCache.lock.Unlock()
+	state, ok := gGlobalCache.typeNum[id]
+	if ok {
+		state.Total -= total
+		if state.Total <= 0 {
+			state.Total = 0
+		}
+		state.Noread -= noread
+		if state.Noread <= 0 {
+			state.Noread = 0
+		}
+	}
+}
+
+func AddType(genre string, total int32, noread int32) {
+	id := int32(classStrInt[genre])
+	gGlobalCache.lock.Lock()
+	defer gGlobalCache.lock.Unlock()
+	state, ok := gGlobalCache.typeNum[id]
+	if ok {
+		state.Total += total
+		state.Noread += noread
+	} else if !ok {
+		gGlobalCache.typeNum[id] = &StateUnit{
+			Total:  total,
+			Noread: noread,
+		}
+	}
+}
+
+func AddTotal(total int32, noread int32) {
+	gGlobalCache.lock.Lock()
+	defer gGlobalCache.lock.Unlock()
+	gGlobalCache.total.Total += total
+	gGlobalCache.total.Noread += noread
+}
+
+func SubTotal(total int32, noread int32) {
+	gGlobalCache.lock.Lock()
+	defer gGlobalCache.lock.Unlock()
+	gGlobalCache.total.Total -= total
+	if gGlobalCache.total.Total < 0 {
+		gGlobalCache.total.Total = 0
+	}
+	gGlobalCache.total.Noread -= noread
+	if gGlobalCache.total.Noread < 0 {
+		gGlobalCache.total.Noread = 0
+	}
+}
+
+func AddSniffer(id int32, total int32, noread int32) {
+	gGlobalCache.lock.Lock()
+	defer gGlobalCache.lock.Unlock()
+	state, ok := gGlobalCache.snifferNum[id]
+	if ok {
+		state.Total += total
+		state.Noread += noread
+	} else if !ok {
+		gGlobalCache.snifferNum[id] = &StateUnit{
+			Total:  total,
+			Noread: noread,
+		}
+	}
+}
+
+func SubSniffer(id int32, total int32, noread int32) {
+	gGlobalCache.lock.Lock()
+	defer gGlobalCache.lock.Unlock()
+	state, ok := gGlobalCache.snifferNum[id]
+	if ok {
+		state.Total -= total
+		if state.Total == 0 {
+			state.Total = 0
+		}
+		state.Noread -= noread
+		if state.Noread == 0 {
+			state.Noread = 0
+		}
+	}
+}
+
+func AddSite(id int32, total int32, noread int32) {
+	gGlobalCache.lock.Lock()
+	defer gGlobalCache.lock.Unlock()
+	state, ok := gGlobalCache.siteNum[id]
+	if ok {
+		state.Total += total
+		state.Noread += noread
+	} else if !ok {
+		gGlobalCache.siteNum[id] = &StateUnit{
+			Total:  total,
+			Noread: noread,
+		}
+	}
+}
+
+func SubSite(id int32, total int32, noread int32) {
+	gGlobalCache.lock.Lock()
+	defer gGlobalCache.lock.Unlock()
+	state, ok := gGlobalCache.siteNum[id]
+	if ok {
+		state.Total -= total
+		if state.Total == 0 {
+			state.Total = 0
+		}
+		state.Noread -= noread
+		if state.Noread == 0 {
+			state.Noread = 0
+		}
+	}
 }
