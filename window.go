@@ -6,9 +6,9 @@ import (
 
 type StateMap struct {
 	typeNum     map[int32]*StateUnit
-	snifferNum  map[int32]*StateUnit
-	snifTypeNum map[int32]map[int32]*StateUnit
-	siteNum     map[int32]*StateUnit
+	snifferNum  map[int64]*StateUnit
+	snifTypeNum map[int64]map[int32]*StateUnit
+	siteNum     map[int64]*StateUnit
 	total       StateUnit
 }
 
@@ -25,9 +25,9 @@ func (this *StateMap) String() string {
 
 func (this *StateMap) accmAdd(data EntryRecord) {
 	MapInt32StateUnit(this.typeNum).Add(int32(data.genre))
-	MapInt32StateUnit(this.snifferNum).Add(int32(data.Sniffer))
-	MapInt32Int32StateUnit(this.snifTypeNum).Add(int32(data.Sniffer), int32(data.genre))
-	MapInt32StateUnit(this.siteNum).Add(data.Site)
+	MapInt64StateUnit(this.snifferNum).Add(int64(data.Sniffer))
+	MapInt64Int32StateUnit(this.snifTypeNum).Add(int64(data.Sniffer), int32(data.genre))
+	MapInt64StateUnit(this.siteNum).Add(data.Site)
 	this.total.Total++
 	this.total.Noread++
 }
@@ -35,22 +35,22 @@ func (this *StateMap) accmAdd(data EntryRecord) {
 func (this *StateMap) merge(para StateMap) error {
 	this.total.merge(&(para.total))
 	MapInt32StateUnit(this.typeNum).merge(MapInt32StateUnit(para.typeNum))
-	MapInt32StateUnit(this.snifferNum).merge(MapInt32StateUnit(para.snifferNum))
-	MapInt32StateUnit(this.siteNum).merge(MapInt32StateUnit(para.siteNum))
-	MapInt32Int32StateUnit(this.snifTypeNum).merge(MapInt32Int32StateUnit(para.snifTypeNum))
+	MapInt64StateUnit(this.snifferNum).merge(MapInt64StateUnit(para.snifferNum))
+	MapInt64StateUnit(this.siteNum).merge(MapInt64StateUnit(para.siteNum))
+	MapInt64Int32StateUnit(this.snifTypeNum).merge(MapInt64Int32StateUnit(para.snifTypeNum))
 	return nil
 }
 
 func (this *StateMap) Init() *StateMap {
 	this.typeNum = make(map[int32]*StateUnit)
-	this.snifferNum = make(map[int32]*StateUnit)
-	this.snifTypeNum = make(map[int32]map[int32]*StateUnit)
-	this.siteNum = make(map[int32]*StateUnit)
+	this.snifferNum = make(map[int64]*StateUnit)
+	this.snifTypeNum = make(map[int64]map[int32]*StateUnit)
+	this.siteNum = make(map[int64]*StateUnit)
 	return this
 }
 
 type window struct {
-	id   int32
+	id   int64
 	time int64
 	//state State
 	mp StateMap
@@ -72,10 +72,10 @@ func (this *window) insert(data EntryRecord) {
 	this.mp.accmAdd(data)
 }
 
-type MapInt32Int32StateUnit map[int32]map[int32]*StateUnit
+type MapInt64Int32StateUnit map[int64]map[int32]*StateUnit
 
-func (this MapInt32Int32StateUnit) Add(key1 int32, key2 int32) {
-	mmp := map[int32]map[int32]*StateUnit(this)
+func (this MapInt64Int32StateUnit) Add(key1 int64, key2 int32) {
+	mmp := map[int64]map[int32]*StateUnit(this)
 	_, ok := mmp[key1]
 	if !ok {
 		mmp[key1] = make(map[int32]*StateUnit)
@@ -83,11 +83,41 @@ func (this MapInt32Int32StateUnit) Add(key1 int32, key2 int32) {
 	MapInt32StateUnit(mmp[key1]).Add(key2)
 }
 
-func (this MapInt32Int32StateUnit) merge(para MapInt32Int32StateUnit) {
-	//	src := map[int32]map[int32]*StateUnit(this)
-	//	dst := map[int32]map[int32]*StateUnit(para)
+func (this MapInt64Int32StateUnit) merge(para MapInt64Int32StateUnit) {
+	//	src := map[int64]map[int64]*StateUnit(this)
+	//	dst := map[int64]map[int64]*StateUnit(para)
 	//	for srck, srcv := range src {
 	//	}
+}
+
+type MapInt64StateUnit map[int64]*StateUnit
+
+func (this MapInt64StateUnit) Add(key int64) {
+	mp := map[int64]*StateUnit(this)
+	p, ok := mp[key]
+	if ok {
+		p.Total += 1
+		p.Noread += 1
+	} else {
+		mp[key] = &StateUnit{
+			Total:  1,
+			Noread: 1,
+		}
+	}
+}
+func (this MapInt64StateUnit) merge(para MapInt64StateUnit) {
+	dst := map[int64]*StateUnit(this)
+	src := map[int64]*StateUnit(para)
+	for srck, srcv := range src {
+		if dstv, ok := dst[srck]; ok {
+			dstv.merge(srcv)
+		} else {
+			dst[srck] = &StateUnit{
+				Total:  srcv.Total,
+				Noread: srcv.Noread,
+			}
+		}
+	}
 }
 
 type MapInt32StateUnit map[int32]*StateUnit

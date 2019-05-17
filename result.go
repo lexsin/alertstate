@@ -41,7 +41,7 @@ func (this *GlobalResult) String() string {
 
 type StateSiteUnits []StateSiteUnit
 
-func (this StateSiteUnits) GenOneSite(id int32, unit *StateUnit) *StateSiteUnit {
+func (this StateSiteUnits) GenOneSite(id int64, unit *StateUnit) *StateSiteUnit {
 	return &StateSiteUnit{
 		Id: uint32(id),
 		StateTypeUnit: StateTypeUnit{
@@ -51,7 +51,7 @@ func (this StateSiteUnits) GenOneSite(id int32, unit *StateUnit) *StateSiteUnit 
 	}
 }
 
-func (this StateSiteUnits) FromMap(siteNum map[int32]*StateUnit) []StateSiteUnit {
+func (this StateSiteUnits) FromMap(siteNum map[int64]*StateUnit) []StateSiteUnit {
 	ss := []StateSiteUnit(this)
 	for siteid, state := range siteNum {
 		s := this.GenOneSite(siteid, state)
@@ -84,7 +84,7 @@ func (this StateSnifUnits) GenOneType(id int32, unit *StateUnit) *StateTypeUnit 
 	}
 }
 
-func (this StateSnifUnits) GenOneSniffer(id int32, unit *StateUnit, types []StateTypeUnit) *StateSnifUnit {
+func (this StateSnifUnits) GenOneSniffer(id int64, unit *StateUnit, types []StateTypeUnit) *StateSnifUnit {
 	return &StateSnifUnit{
 		Id: uint32(id),
 		//Id: gIdNameMap.GetSnifferName(id),
@@ -99,8 +99,8 @@ func (this StateSnifUnits) GenOneSniffer(id int32, unit *StateUnit, types []Stat
 	}
 }
 
-func (this StateSnifUnits) FromMap(snifferNum map[int32]*StateUnit,
-	snifTypeNum map[int32]map[int32]*StateUnit) []StateSnifUnit {
+func (this StateSnifUnits) FromMap(snifferNum map[int64]*StateUnit,
+	snifTypeNum map[int64]map[int32]*StateUnit) []StateSnifUnit {
 
 	sss := []StateSnifUnit(this)
 
@@ -133,18 +133,6 @@ func (this *StateSnifUnit) String() string {
 	return str
 }
 
-/*
-func (this []StateTypeUnit) FromMap(typeNum map[int32]*StateUnit) {
-	//ss := []StateTypeUnit(this)
-	for id, stateUnit := range typeNum {
-		s := StateTypeUnits(this).GenOneType(id, stateUnit)
-		this = append(this, *s)
-	}
-	fmt.Println("ss=", this)
-	this = StateTypeUnits(this)
-	fmt.Println("this=", this)
-}
-*/
 type StateTypeUnits []StateTypeUnit
 
 func (this StateTypeUnits) GenOneType(id int32, state *StateUnit) *StateTypeUnit {
@@ -176,7 +164,7 @@ type StateTypeUnit struct {
 
 func (this StateTypeUnit) String() string {
 	str := fmt.Sprintf("name:%s", this.Name)
-	str += fmt.Sprintf(&this.StateUnit)
+	str += fmt.Sprintf("%s", &this.StateUnit)
 	return str
 }
 

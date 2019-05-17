@@ -11,8 +11,8 @@ type GlobalCache struct {
 	lock *sync.Mutex
 	time int64
 	StateMap
-	snifTypeNumRt map[int32]map[int32]*StateUnit //realtime
-	snifferNumRt  map[int32]*StateUnit
+	snifTypeNumRt map[int64]map[int32]*StateUnit //realtime
+	snifferNumRt  map[int64]*StateUnit
 }
 
 func (this *GlobalCache) String() string {
@@ -34,8 +34,8 @@ func (this *GlobalCache) Insert(data EntryRecord) {
 	this.StateMap.accmAdd(data)
 	//record name
 	gIdNameMap.Insert(
-		idNameT{int32(data.Sniffer), data.Sniffername},
-		idNameT{int32(data.Site), data.Sitename})
+		idNameT{int64(data.Sniffer), data.Sniffername},
+		idNameT{int64(data.Site), data.Sitename})
 }
 
 func (this *GlobalCache) ToSlice() *GlobalResult {
@@ -108,7 +108,10 @@ func SubTotal(total int32, noread int32) {
 	}
 }
 
-func AddSniffer(id int32, total int32, noread int32) {
+func AddSniffer(id int64, name string, total int32, noread int32) {
+	//inset name
+	gIdNameMap.InsertSniffer(idNameT{int64(id), name})
+	//insert id
 	gGlobalCache.lock.Lock()
 	defer gGlobalCache.lock.Unlock()
 	state, ok := gGlobalCache.snifferNum[id]
@@ -123,7 +126,7 @@ func AddSniffer(id int32, total int32, noread int32) {
 	}
 }
 
-func SubSniffer(id int32, total int32, noread int32) {
+func SubSniffer(id int64, total int32, noread int32) {
 	gGlobalCache.lock.Lock()
 	defer gGlobalCache.lock.Unlock()
 	state, ok := gGlobalCache.snifferNum[id]
@@ -139,7 +142,10 @@ func SubSniffer(id int32, total int32, noread int32) {
 	}
 }
 
-func AddSite(id int32, total int32, noread int32) {
+func AddSite(id int64, name string, total int32, noread int32) {
+	//insert name
+	gIdNameMap.InsertSite(idNameT{int64(id), name})
+	//insert id
 	gGlobalCache.lock.Lock()
 	defer gGlobalCache.lock.Unlock()
 	state, ok := gGlobalCache.siteNum[id]
@@ -154,7 +160,7 @@ func AddSite(id int32, total int32, noread int32) {
 	}
 }
 
-func SubSite(id int32, total int32, noread int32) {
+func SubSite(id int64, total int32, noread int32) {
 	gGlobalCache.lock.Lock()
 	defer gGlobalCache.lock.Unlock()
 	state, ok := gGlobalCache.siteNum[id]

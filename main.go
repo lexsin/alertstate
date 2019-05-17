@@ -12,7 +12,7 @@ type EntryRecord struct {
 	genre       classType
 	Sniffer     int64
 	Sniffername string
-	Site        int32
+	Site        int64
 	Sitename    string
 }
 
@@ -56,8 +56,8 @@ func (this *LocalCache) GetWindowTime(winid int64) int64 {
 	return int64(winid) * int64(this.WinWidth)
 }
 
-func (this *LocalCache) GetOvertimeWinid() int32 {
-	return int32(int64(this.MaxWinId) - int64(this.WinNum))
+func (this *LocalCache) GetOvertimeWinid() int64 {
+	return int64(int64(this.MaxWinId) - int64(this.WinNum))
 }
 
 var deleteWindowCount = 0
@@ -106,8 +106,8 @@ func (this *LocalCache) MvToGlobal(id int64) error {
 func (this *LocalCache) insert(winid int64, data EntryRecord) {
 	//record name
 	gIdNameMap.Insert(
-		idNameT{int32(data.Sniffer), data.Sniffername},
-		idNameT{int32(data.Site), data.Sitename})
+		idNameT{int64(data.Sniffer), data.Sniffername},
+		idNameT{int64(data.Site), data.Sitename})
 	//insert
 	this.Windows[winid].insert(data)
 }
