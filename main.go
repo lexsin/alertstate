@@ -2,6 +2,7 @@ package alertstate
 
 import (
 	"fmt"
+	"runtime/debug"
 	"sync"
 	"time"
 )
@@ -12,7 +13,7 @@ type EntryRecord struct {
 	genre       classType
 	Sniffer     int64
 	Sniffername string
-	Site        int64
+	Site        int32
 	Sitename    string
 }
 
@@ -112,8 +113,16 @@ func (this *LocalCache) insert(winid int64, data EntryRecord) {
 	this.Windows[winid].insert(data)
 }
 
+func deferf(winid int64, maxid int64, time int64) {
+	if err := recover(); err != nil {
+		fmt.Println("panic:", err, string(debug.Stack()))
+		fmt.Println("winid=", winid, "maxid=", maxid, "time=", time)
+	}
+}
+
 func (this *LocalCache) Insert(data EntryRecord) (err error) {
 	winid := data.Timestamp / int64(this.WinWidth)
+	defer deferf(winid, this.MaxWinId, data.Timestamp)
 
 	if this.MaxWinId == 0 {
 		/*

@@ -142,28 +142,28 @@ func SubSniffer(id int64, total int32, noread int32) {
 	}
 }
 
-func AddSite(id int64, name string, total int32, noread int32) {
+func AddSite(id int32, name string, total int32, noread int32) {
 	//insert name
 	gIdNameMap.InsertSite(idNameT{int64(id), name})
 	//insert id
 	gGlobalCache.lock.Lock()
 	defer gGlobalCache.lock.Unlock()
-	state, ok := gGlobalCache.siteNum[id]
+	state, ok := gGlobalCache.siteNum[int64(id)]
 	if ok {
 		state.Total += total
 		state.Noread += noread
 	} else if !ok {
-		gGlobalCache.siteNum[id] = &StateUnit{
+		gGlobalCache.siteNum[int64(id)] = &StateUnit{
 			Total:  total,
 			Noread: noread,
 		}
 	}
 }
 
-func SubSite(id int64, total int32, noread int32) {
+func SubSite(id int32, total int32, noread int32) {
 	gGlobalCache.lock.Lock()
 	defer gGlobalCache.lock.Unlock()
-	state, ok := gGlobalCache.siteNum[id]
+	state, ok := gGlobalCache.siteNum[int64(id)]
 	if ok {
 		state.Total -= total
 		if state.Total == 0 {

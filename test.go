@@ -15,9 +15,9 @@ func StartTest() {
 	for {
 		select {
 		case <-ticker.C:
-			if tickercount == 2 {
-				return
-			}
+			//			if tickercount == 2 {
+			//				return
+			//			}
 			tickercount++
 			count = 0
 			send(ss)
@@ -37,9 +37,12 @@ func StartTest() {
 
 func send(ss []EntryRecord) {
 	fmt.Println("send len = ", len(ss))
+	count := 0
 	for _, record := range ss {
+		count++
 		InputCh <- record
 	}
+	fmt.Println("send final count=", count)
 }
 
 func genSample(t int64) EntryRecord {
@@ -53,7 +56,7 @@ func genSample(t int64) EntryRecord {
 		Genre:       classIntStr[classType(genre)],
 		Sniffer:     int64(sniffer),
 		Sniffername: strconv.Itoa(sniffer),
-		Site:        int64(site),
+		Site:        int32(site),
 		Sitename:    strconv.Itoa(site),
 	}
 }
