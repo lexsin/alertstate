@@ -9,17 +9,20 @@ func alert_state_handler(result *alertstate.GlobalResult) {
 	//fmt.Println(result)
 	fix := AlertStateFix{}
 	fix.FromArts(result)
-	fmt.Println("fix=", fix)
+	//fmt.Println("fix=", fix)
+	Debug("fix=", fix)
 	//to websockt
 
 	sites := AlertStateSite{}
 	sites.FromArts(result)
 	fmt.Println("sites=", sites)
+	Debug("sites=", sites)
 	//to websockt
 
 	realtimesniffer := AlertRealtimeSniffer{}
 	realtimesniffer.FromArts(result)
 	fmt.Println("realtimesniffer=", realtimesniffer)
+	Debug("realtimesniffer=", realtimesniffer)
 	//to websockt
 }
 

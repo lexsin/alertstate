@@ -47,6 +47,7 @@ var classIntStr = map[classType]string{
 }
 
 func Init(width int32) {
+	initLog()
 	//WindowWidth := 5
 	gGlobalCache.Init()
 	gIdNameMap.Init()

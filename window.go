@@ -56,10 +56,19 @@ type window struct {
 	mp StateMap
 }
 
+func GetWindowTime(winid int64, WinWidth int32) int64 {
+	return int64(winid) * int64(WinWidth)
+}
+
 func (this *window) String() string {
 	str := fmt.Sprintf("id=%d time=%d", this.id, this.time)
 	str += fmt.Sprintln(&this.mp)
 	return str
+}
+
+func (this *window) new(wid int64, WinWidth int32) *window {
+	Debug("create window id=", wid)
+	return this.init(GetWindowTime(wid, WinWidth))
 }
 
 func (this *window) init(timestamp int64) *window {

@@ -20,7 +20,8 @@ type EntryRecord struct {
 func (this *EntryRecord) Transform() error {
 	genre, ok := classStrInt[this.Genre]
 	if !ok {
-		fmt.Println("alert type error:", this.Genre)
+		//fmt.Println("alert type error:", this.Genre)
+		Error("alert type error:", this.Genre)
 		return ErrClassTypeErr
 	}
 	this.genre = genre
@@ -53,10 +54,6 @@ func (this *LocalCache) Init(width int32, num int32) (error, *LocalCache) {
 	return nil, this
 }
 
-func (this *LocalCache) GetWindowTime(winid int64) int64 {
-	return int64(winid) * int64(this.WinWidth)
-}
-
 func (this *LocalCache) GetOvertimeWinid() int64 {
 	return int64(int64(this.MaxWinId) - int64(this.WinNum))
 }
@@ -64,6 +61,7 @@ func (this *LocalCache) GetOvertimeWinid() int64 {
 var deleteWindowCount = 0
 
 func (this *LocalCache) deleteWindow(id int64) error {
+	Debug("delete window id=", id)
 	//move to global cache
 	this.MvToGlobal(id)
 	//to handler(websocket)
@@ -74,9 +72,11 @@ func (this *LocalCache) deleteWindow(id int64) error {
 
 func (this *LocalCache) recycleAllWindows() {
 	for wid, _ := range this.Windows {
+		fmt.Println("delete window id=", wid)
 		this.MvToGlobal(wid)
 	}
 	this.StateNHandler()
+	this.MaxWinId = 0
 }
 
 func (this *LocalCache) StateNHandler() {
@@ -91,7 +91,7 @@ func (this *LocalCache) MvToGlobal(id int64) error {
 
 	if _, ok := this.Windows[id]; !ok {
 		deleteWindowCount++
-		fmt.Println("delete window not exist count=", deleteWindowCount)
+		Info("delete window not exist count=", deleteWindowCount)
 		return ErrWindowNotExist
 	}
 
@@ -115,22 +115,21 @@ func (this *LocalCache) insert(winid int64, data EntryRecord) {
 
 func deferf(winid int64, maxid int64, time int64) {
 	if err := recover(); err != nil {
-		fmt.Println("panic:", err, string(debug.Stack()))
-		fmt.Println("winid=", winid, "maxid=", maxid, "time=", time)
+		Error("panic:", err, string(debug.Stack()))
+		Error("winid=", winid, "maxid=", maxid, "time=", time)
 	}
 }
 
 func (this *LocalCache) Insert(data EntryRecord) (err error) {
 	winid := data.Timestamp / int64(this.WinWidth)
 	defer deferf(winid, this.MaxWinId, data.Timestamp)
-
 	if this.MaxWinId == 0 {
 		/*
 			new window
 			value maxid
 			insert
 		*/
-		this.Windows[winid] = new(window).init(this.GetWindowTime(winid))
+		this.Windows[winid] = new(window).new(winid, this.WinWidth)
 		this.MaxWinId = winid
 	} else if winid == this.MaxWinId-1 {
 		/*
@@ -138,7 +137,7 @@ func (this *LocalCache) Insert(data EntryRecord) (err error) {
 			insert
 		*/
 		if _, ok := this.Windows[winid]; !ok {
-			this.Windows[winid] = new(window).init(this.GetWindowTime(winid))
+			this.Windows[winid] = new(window).new(winid, this.WinWidth)
 		}
 	} else if winid == this.MaxWinId {
 		/*
@@ -151,7 +150,7 @@ func (this *LocalCache) Insert(data EntryRecord) (err error) {
 			go delete old window
 			insert
 		*/
-		this.Windows[winid] = new(window).init(this.GetWindowTime(winid))
+		this.Windows[winid] = new(window).new(winid, this.WinWidth)
 		this.deleteWindow(this.MaxWinId - 1)
 		this.MaxWinId = winid
 	} else if winid < this.MaxWinId-1 {
@@ -170,7 +169,7 @@ func (this *LocalCache) Insert(data EntryRecord) (err error) {
 		for wid, _ := range this.Windows {
 			this.MvToGlobal(wid)
 		}
-		this.Windows[winid] = new(window).init(this.GetWindowTime(winid))
+		this.Windows[winid] = new(window).new(winid, this.WinWidth)
 		this.MaxWinId = winid
 	}
 	this.insert(winid, data)
