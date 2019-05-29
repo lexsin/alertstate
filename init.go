@@ -46,10 +46,14 @@ var classIntStr = map[classType]string{
 	AlertTypeFlow5Tuple:    "flow_5tuple",
 }
 
-func Init(width int32) {
+// func Init(width int32) {
+// 	initLog()
+// 	//WindowWidth := 5
+// 	gGlobalCache.Init()
+// 	gIdNameMap.Init()
+// 	GLocalCach.Init(int32(width), 2)
+// }
+
+func init() {
 	initLog()
-	//WindowWidth := 5
-	gGlobalCache.Init()
-	gIdNameMap.Init()
-	GLocalCach.Init(int32(width), 2)
 }

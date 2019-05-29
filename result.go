@@ -41,20 +41,20 @@ func (this *GlobalResult) String() string {
 
 type StateSiteUnits []StateSiteUnit
 
-func (this StateSiteUnits) GenOneSite(id int64, unit *StateUnit) *StateSiteUnit {
+func (this StateSiteUnits) GenOneSite(id int64, unit *StateUnit, idName *IdNameMap) *StateSiteUnit {
 	return &StateSiteUnit{
 		Id: uint32(id),
 		StateTypeUnit: StateTypeUnit{
-			Name:      gIdNameMap.GetSiteName(id),
+			Name:      idName.GetSiteName(id),
 			StateUnit: *unit,
 		},
 	}
 }
 
-func (this StateSiteUnits) FromMap(siteNum map[int64]*StateUnit) []StateSiteUnit {
+func (this StateSiteUnits) FromMap(siteNum map[int64]*StateUnit, idName *IdNameMap) []StateSiteUnit {
 	ss := []StateSiteUnit(this)
 	for siteid, state := range siteNum {
-		s := this.GenOneSite(siteid, state)
+		s := this.GenOneSite(siteid, state, idName)
 		ss = append(ss, *s)
 	}
 	return ss
@@ -84,12 +84,12 @@ func (this StateSnifUnits) GenOneType(id int32, unit *StateUnit) *StateTypeUnit 
 	}
 }
 
-func (this StateSnifUnits) GenOneSniffer(id int64, unit *StateUnit, types []StateTypeUnit) *StateSnifUnit {
+func (this StateSnifUnits) GenOneSniffer(id int64, unit *StateUnit, types []StateTypeUnit, idName *IdNameMap) *StateSnifUnit {
 	return &StateSnifUnit{
 		Id: uint32(id),
 		//Id: gIdNameMap.GetSnifferName(id),
 		StateTypeUnit: StateTypeUnit{
-			Name: gIdNameMap.GetSnifferName(id),
+			Name: idName.GetSnifferName(id),
 			StateUnit: StateUnit{
 				Total:  unit.Total,
 				Noread: unit.Noread,
@@ -100,7 +100,8 @@ func (this StateSnifUnits) GenOneSniffer(id int64, unit *StateUnit, types []Stat
 }
 
 func (this StateSnifUnits) FromMap(snifferNum map[int64]*StateUnit,
-	snifTypeNum map[int64]map[int32]*StateUnit) []StateSnifUnit {
+	snifTypeNum map[int64]map[int32]*StateUnit,
+	idName *IdNameMap) []StateSnifUnit {
 
 	sss := []StateSnifUnit(this)
 
@@ -114,7 +115,7 @@ func (this StateSnifUnits) FromMap(snifferNum map[int64]*StateUnit,
 		} else {
 			//panic(fmt.Sprintln("StateSnifUnits.FromMap sniffer id not int snifTypeNum ", snifid))
 		}
-		sniffer := this.GenOneSniffer(snifid, SnifStateUnit, ts)
+		sniffer := this.GenOneSniffer(snifid, SnifStateUnit, ts, idName)
 		sss = append(sss, *sniffer)
 	}
 	return sss

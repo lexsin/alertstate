@@ -36,13 +36,13 @@ func StartTest() {
 }
 
 func send(ss []EntryRecord) {
-	fmt.Println("send len = ", len(ss))
-	count := 0
-	for _, record := range ss {
-		count++
-		InputCh <- record
-	}
-	fmt.Println("send final count=", count)
+	// fmt.Println("send len = ", len(ss))
+	// count := 0
+	// for _, record := range ss {
+	// 	count++
+	// 	InputCh <- record
+	// }
+	// fmt.Println("send final count=", count)
 }
 
 func genSample(t int64) EntryRecord {

@@ -1,209 +1,180 @@
 package alertstate
 
-import (
-	"fmt"
-	"runtime/debug"
-	"sync"
-	"time"
-)
-
-type EntryRecord struct {
-	Timestamp   int64
-	Genre       string
-	genre       classType
-	Sniffer     int64
-	Sniffername string
-	Site        int32
-	Sitename    string
+type AlertState struct {
+	//globalCache GlobalCache
+	//gIdNameMap IdNameMap
+	LocalCach LocalCache
+	InputCh   chan EntryRecord
+	Handler   func(*GlobalResult)
 }
 
-func (this *EntryRecord) Transform() error {
-	genre, ok := classStrInt[this.Genre]
-	if !ok {
-		//fmt.Println("alert type error:", this.Genre)
-		Error("alert type error:", this.Genre)
-		return ErrClassTypeErr
-	}
-	this.genre = genre
-	return nil
+func (this *AlertState) Init(width int32) *AlertState {
+	//initLog()
+	//WindowWidth := 5
+	//this.globalCache.Init()
+	//this.gIdNameMap.Init()
+	this.LocalCach.Init(int32(width), 2)
+	this.LocalCach.globalCache.Init()
+	this.InputCh = this.LocalCach.InputCh
+	//this.nameMapP.Init()
+	return this
 }
 
-var GLocalCach LocalCache
-var InputCh = make(chan EntryRecord, InputCacheLenDef)
-
-type LocalCache struct {
-	lock        *sync.Mutex
-	WinWidth    int32 //秒
-	WinNum      int32
-	InputCh     chan EntryRecord
-	MaxWinId    int64
-	Windows     map[int64]*window
-	WillBeDelId int64
-	Handler     func(*GlobalResult)
-}
-
-func (this *LocalCache) Init(width int32, num int32) (error, *LocalCache) {
-	this.lock = new(sync.Mutex)
-	if width <= 0 || num < 1 {
-		return ErrWinParamentErr, nil
-	}
-	this.WinWidth = width
-	this.WinNum = num
-	this.InputCh = InputCh
-	this.Windows = make(map[int64]*window)
-	return nil, this
-}
-
-func (this *LocalCache) GetOvertimeWinid() int64 {
-	return int64(int64(this.MaxWinId) - int64(this.WinNum))
-}
-
-var deleteWindowCount = 0
-
-func (this *LocalCache) deleteWindow(id int64) error {
-	Debug("delete window id=", id)
-	//move to global cache
-	this.MvToGlobal(id)
-	//to handler(websocket)
-	//TODO
-	this.StateNHandler()
-	return nil
-}
-
-func (this *LocalCache) recycleAllWindows() {
-	for wid, _ := range this.Windows {
-		fmt.Println("delete window id=", wid)
-		this.MvToGlobal(wid)
-	}
-	this.StateNHandler()
-	this.MaxWinId = 0
-}
-
-func (this *LocalCache) StateNHandler() {
-	result := gGlobalCache.ToSlice()
+func (this *AlertState) localCacheHandler() {
+	result := this.LocalCach.globalCache.ToSlice()
 	this.Handler(result)
-	//fmt.Println("result", result)
 }
 
-func (this *LocalCache) MvToGlobal(id int64) error {
-	gGlobalCache.lock.Lock()
-	defer gGlobalCache.lock.Unlock()
-
-	if _, ok := this.Windows[id]; !ok {
-		deleteWindowCount++
-		Info("delete window not exist count=", deleteWindowCount)
-		return ErrWindowNotExist
-	}
-
-	gGlobalCache.time = this.Windows[id].time
-	gGlobalCache.merge((this.Windows[id].mp))
-	gGlobalCache.snifTypeNumRt = this.Windows[id].mp.snifTypeNum
-	gGlobalCache.snifferNumRt = this.Windows[id].mp.snifferNum
-	//free map
-	delete(this.Windows, id)
+func (this *AlertState) Start(handler func(*GlobalResult)) error {
+	this.Handler = handler
+	this.LocalCach.Handler = this.localCacheHandler
+	this.LocalCach.Start()
 	return nil
 }
-
-func (this *LocalCache) insert(winid int64, data EntryRecord) {
-	//record name
-	gIdNameMap.Insert(
-		idNameT{int64(data.Sniffer), data.Sniffername},
-		idNameT{int64(data.Site), data.Sitename})
-	//insert
-	this.Windows[winid].insert(data)
+func (this *AlertState) Free() {
+	this.LocalCach.Done <- 1
 }
 
-func deferf(winid int64, maxid int64, time int64) {
-	if err := recover(); err != nil {
-		Error("panic:", err, string(debug.Stack()))
-		Error("winid=", winid, "maxid=", maxid, "time=", time)
-	}
+func (this *AlertState) WinWidth() int32 {
+	return this.LocalCach.WinWidth
 }
 
-func (this *LocalCache) Insert(data EntryRecord) (err error) {
-	winid := data.Timestamp / int64(this.WinWidth)
-	defer deferf(winid, this.MaxWinId, data.Timestamp)
-	if this.MaxWinId == 0 {
-		/*
-			new window
-			value maxid
-			insert
-		*/
-		this.Windows[winid] = new(window).new(winid, this.WinWidth)
-		this.MaxWinId = winid
-	} else if winid == this.MaxWinId-1 {
-		/*
-			new window if not exist
-			insert
-		*/
-		if _, ok := this.Windows[winid]; !ok {
-			this.Windows[winid] = new(window).new(winid, this.WinWidth)
+// func (this *AlertState) MvLocToGlb(id int64) error {
+// 	this.gLocalCach.lock.Lock()
+// 	defer this.gLocalCach.lock.Unlock()
+
+// 	if _, ok := this.gLocalCach.Windows[id]; !ok {
+// 		deleteWindowCount++
+// 		Info("delete window not exist count=", deleteWindowCount)
+// 		return ErrWindowNotExist
+// 	}
+
+// 	this.gLocalCach.globalCache.time = this.gLocalCach.Windows[id].time
+// 	this.gLocalCach.globalCache.merge((this.gLocalCach.Windows[id].mp))
+// 	this.gLocalCach.snifTypeNumRt = this.gLocalCach.Windows[id].mp.snifTypeNum
+// 	this.gLocalCach.snifferNumRt = this.gLocalCach.Windows[id].mp.snifferNum
+// 	//free map
+// 	delete(this.gLocalCach.Windows, id)
+// 	return nil
+// }
+
+func (this *AlertState) SubType(genre string, total int32, noread int32) {
+	id := int32(classStrInt[genre])
+	this.LocalCach.globalCache.lock.Lock()
+	defer this.LocalCach.globalCache.lock.Unlock()
+	state, ok := this.LocalCach.globalCache.typeNum[id]
+	if ok {
+		state.Total -= total
+		if state.Total <= 0 {
+			state.Total = 0
 		}
-	} else if winid == this.MaxWinId {
-		/*
-			insert
-		*/
-	} else if winid == this.MaxWinId+1 {
-		/*
-			new window
-			value maxid
-			go delete old window
-			insert
-		*/
-		this.Windows[winid] = new(window).new(winid, this.WinWidth)
-		this.deleteWindow(this.MaxWinId - 1)
-		this.MaxWinId = winid
-	} else if winid < this.MaxWinId-1 {
-		/*
-			insert global window
-		*/
-		gGlobalCache.Insert(data)
-		return
-	} else if winid > this.MaxWinId+1 {
-		/*
-			delete all window
-			new window
-			value maxid
-			insert
-		*/
-		for wid, _ := range this.Windows {
-			this.MvToGlobal(wid)
-		}
-		this.Windows[winid] = new(window).new(winid, this.WinWidth)
-		this.MaxWinId = winid
-	}
-	this.insert(winid, data)
-	return nil
-}
-
-func (this *LocalCache) Start() {
-	if this.Handler == nil {
-		fmt.Println("start Error:LocalCache handler is nil")
-		return
-	}
-
-	winTimeout := time.Duration(this.WinWidth) * time.Second
-	timer := time.NewTimer(winTimeout)
-	for {
-		timer.Reset(winTimeout)
-		select {
-		case data := <-this.InputCh:
-			if err := data.Transform(); err != nil {
-				continue
-			}
-			this.Insert(data)
-		case <-timer.C:
-			this.recycleAllWindows()
+		state.Noread -= noread
+		if state.Noread <= 0 {
+			state.Noread = 0
 		}
 	}
 }
 
-func Print() {
-	//	go func() {
-	//		for {
-	//			time.Sleep(1 * time.Second)
+func (this *AlertState) AddType(genre string, total int32, noread int32) {
+	id := int32(classStrInt[genre])
+	this.LocalCach.globalCache.lock.Lock()
+	defer this.LocalCach.globalCache.lock.Unlock()
+	state, ok := this.LocalCach.globalCache.typeNum[id]
+	if ok {
+		state.Total += total
+		state.Noread += noread
+	} else if !ok {
+		this.LocalCach.globalCache.typeNum[id] = &StateUnit{
+			Total:  total,
+			Noread: noread,
+		}
+	}
+}
 
-	//			fmt.Println("snifTypeNumRt=", gGlobalCache.snifTypeNumRt, "snifferNumRt=", gGlobalCache.snifTypeNumRt)
-	//		}
-	//	}()
+func (this *AlertState) AddTotal(total int32, noread int32) {
+	this.LocalCach.globalCache.lock.Lock()
+	defer this.LocalCach.globalCache.lock.Unlock()
+	this.LocalCach.globalCache.total.Total += total
+	this.LocalCach.globalCache.total.Noread += noread
+}
+
+func (this *AlertState) SubTotal(total int32, noread int32) {
+	this.LocalCach.globalCache.lock.Lock()
+	defer this.LocalCach.globalCache.lock.Unlock()
+	this.LocalCach.globalCache.total.Total -= total
+	if this.LocalCach.globalCache.total.Total < 0 {
+		this.LocalCach.globalCache.total.Total = 0
+	}
+	this.LocalCach.globalCache.total.Noread -= noread
+	if this.LocalCach.globalCache.total.Noread < 0 {
+		this.LocalCach.globalCache.total.Noread = 0
+	}
+}
+
+func (this *AlertState) AddSniffer(id int64, name string, total int32, noread int32) {
+	//inset name
+	this.LocalCach.globalCache.InsertSniffer(idNameT{int64(id), name})
+	//insert id
+	this.LocalCach.globalCache.lock.Lock()
+	defer this.LocalCach.globalCache.lock.Unlock()
+	state, ok := this.LocalCach.globalCache.snifferNum[id]
+	if ok {
+		state.Total += total
+		state.Noread += noread
+	} else if !ok {
+		this.LocalCach.globalCache.snifferNum[id] = &StateUnit{
+			Total:  total,
+			Noread: noread,
+		}
+	}
+}
+
+func (this *AlertState) SubSniffer(id int64, total int32, noread int32) {
+	this.LocalCach.globalCache.lock.Lock()
+	defer this.LocalCach.globalCache.lock.Unlock()
+	state, ok := this.LocalCach.globalCache.snifferNum[id]
+	if ok {
+		state.Total -= total
+		if state.Total == 0 {
+			state.Total = 0
+		}
+		state.Noread -= noread
+		if state.Noread == 0 {
+			state.Noread = 0
+		}
+	}
+}
+
+func (this *AlertState) AddSite(id int32, name string, total int32, noread int32) {
+	//insert name
+	this.LocalCach.globalCache.InsertSite(idNameT{int64(id), name})
+	//insert id
+	this.LocalCach.globalCache.lock.Lock()
+	defer this.LocalCach.globalCache.lock.Unlock()
+	state, ok := this.LocalCach.globalCache.siteNum[int64(id)]
+	if ok {
+		state.Total += total
+		state.Noread += noread
+	} else if !ok {
+		this.LocalCach.globalCache.siteNum[int64(id)] = &StateUnit{
+			Total:  total,
+			Noread: noread,
+		}
+	}
+}
+
+func (this *AlertState) SubSite(id int32, total int32, noread int32) {
+	this.LocalCach.globalCache.lock.Lock()
+	defer this.LocalCach.globalCache.lock.Unlock()
+	state, ok := this.LocalCach.globalCache.siteNum[int64(id)]
+	if ok {
+		state.Total -= total
+		if state.Total == 0 {
+			state.Total = 0
+		}
+		state.Noread -= noread
+		if state.Noread == 0 {
+			state.Noread = 0
+		}
+	}
 }

@@ -5,7 +5,7 @@ import (
 	"sync"
 )
 
-var gIdNameMap IdNameMap
+//var gIdNameMap IdNameMap
 
 type idNameT struct {
 	id   int64
